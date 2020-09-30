@@ -29,7 +29,7 @@ mhshow-show-text/html:	%lcathtml
 locale:	ja_JP.eucJP
 #:locale:	ja_JP.UTF-8
 #: string to put in From: field
-Local-Mailbox: =?iso-2022-jp?B?[Base64EncodedString]?= <mailaddrss>
+Local-Mailbox: =?iso-2022-jp?B?[Base64EncodedString]?= <mailaddress>
 #: file holding login ID & password
 credentials: file:.mh.cred
 #:

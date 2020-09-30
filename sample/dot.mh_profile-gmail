@@ -7,12 +7,19 @@ Editor:	emacs-nw
 Aliasfile: aliases
 repl:	-filter mhl.reply
 forw:	-filter mhl.forward
-inc:	-form scan.mhe
+#
+# invoke mhlogin as
+#	mhlogin -user <YourGmailID> -saslmech xoauth2 -authservice gmail \
+#		-browser <YourFavoritBrowser>
+# and follow its instruction to generate oauth-gmail
+#
+inc:	-form scan.mhe	-host pop.gmail.com -port pop3s -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID>
+msgchk:			-host pop.gmail.com -port pop3s -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID> -nocertverify
 scan:	-form scan.mhe
 mhl:	-form mhl.mime
 mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
 nmh-storage:	/tmp
-send:	-alias aliases -port smtp
+send:	-alias aliases -server smtp.gmail.com -port smtps -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID>
 whom:	-alias aliases
 folder:	-pack 
 # specify your favorite pager
@@ -22,8 +29,8 @@ formatproc:	<PATH>/repl-formatproc
 #:
 lproc: mhl
 #:
-mhshow-show-text: cat
-mhshow-show-text/html: %lcathtml
+mhshow-show-text:	cat
+mhshow-show-text/html:	%lcathtml
 #:
 locale:	ja_JP.eucJP
 #:locale:	ja_JP.UTF-8
