@@ -1,0 +1,12 @@
+overflowtext="",overflowoffset=0
+width=256
+leftadjust,compwidth=13
+From:formatfield="%(decode{text})"
+Subject:formatfield="%(decode{text})"
+Date:formatfield="%<(nodate{text})%{text}%|%(pretty{text})%>"
+To:formatfield="%(decode{text})"
+Cc:formatfield="%(decode{text})"
+Bcc:formatfield="%(decode{text})"
+extras:nocomponent,formatfield="%(decode{text})"
+:
+body:nocomponent,overflowtext="",overflowoffset=0,noleftadjust

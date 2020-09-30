@@ -1,0 +1,36 @@
+Path: MH
+Draft-Folder: drafts
+Folder-Protect: 700
+Msg-Protect: 600
+# specify your favorite editor
+Editor:	emacs-nw
+Aliasfile: aliases
+repl:	-filter mhl.reply
+forw:	-filter mhl.forward
+inc:	-form scan.mhe
+scan:	-form scan.mhe
+mhl:	-form mhl.mime
+mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
+nmh-storage:	/tmp
+send:	-alias aliases -port smtp
+whom:	-alias aliases
+folder:	-pack 
+# specify your favorite pager
+moreproc:	/usr/local/bin/jless
+# specify filter to compose reply body
+formatproc:	<PATH>/repl-formatproc
+#:
+lproc: mhl
+#:
+mhshow-show-text: cat
+mhshow-show-text/html: %lcathtml
+#:
+locale:	ja_JP.eucJP
+#:locale:	ja_JP.UTF-8
+#: string to put in From: field
+Local-Mailbox: =?iso-2022-jp?B?[Base64EncodedString]?= <mailaddrss>
+#:
+#: enable local patch
+encode_atom_wise: enable
+scan_text_plain: enable
+force_8bit: enable

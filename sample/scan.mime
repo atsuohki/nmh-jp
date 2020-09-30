@@ -1,0 +1,5 @@
+%4(msg)%<(cur)+%| %>%<{replied}-%|%<{encrypted}E%|%<{content-type}M%| %>%>%>\
+%02(mon{date})/%02(mday{date})\
+%<{date} %|*%>\
+%16(decode(friendly{from}))\
+ %(decode{subject})%<{body}<<%{body}%>
