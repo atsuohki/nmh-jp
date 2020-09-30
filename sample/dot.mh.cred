@@ -1,0 +1,2 @@
+machine pop.nifty.com  login <YourLoginId> passwd <YourLoginPassword>
+machine smtp.nifty.com login <YourLoginId> passwd <YourLoginPassword>
