@@ -3,6 +3,14 @@
 	README		このファイル
 	nmh-1.7.1-patch 日本語パッチ
 	my-code		formatproc用サンプルコード
+	sample/*	formatファイル、.mh_profileのサンプル
+
+○ nmh-1.7.1ソースツリーにnmh-1.7.1-patchを適用してから
+	INSTALLの手順にしたがってビルド。
+
+	configure --with-hash-backup --with-tls --with-cyrus-sasl
+	make
+	make install
 
 ==========================================================================
 === 変更履歴
