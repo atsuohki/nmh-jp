@@ -131,10 +131,6 @@ sbr/unquote.c
 	iso-2022-jpコードシーケンスはアンクォート処理の対象としない。
 
 uip/mhbuildsbr.c
-    build_mime():
-	ヘッダー内にiso-2022-jpコードシーケンスや8ビットコードがある場合、
-	MIME-Version、Content-Transfer-Encodingをエラー扱いせずに無視。
-
     scan_content():
 	テキスト部分にiso-2022-jpコードシーケンスを含む場合、
 	「Content-Type: text/plain; charset="iso-2022-jp"」
