@@ -1112,7 +1112,7 @@
  
      return OK;
 --- uip/scansbr.c-ORIG	2018-03-07 04:05:56.000000000 +0900
-+++ uip/scansbr.c	2018-07-20 09:42:16.000000000 +0900
++++ uip/scansbr.c	2022-03-19 22:41:58.548673000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -1256,7 +1256,7 @@
      }
  
      if (size)
-@@ -355,4 +450,191 @@
+@@ -355,4 +450,190 @@
  void
  scan_detect_mbox_style (FILE *f) {
      m_unknown (&gstate, f);
@@ -1290,7 +1290,6 @@
 +	    buf += 2;
 +	    continue;
 +	}
-+	if (c == '_') c = ' ';
 +	/* normal characters */
 +	*(p++) = c;
 +    }
