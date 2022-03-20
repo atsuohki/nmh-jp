@@ -81,10 +81,8 @@ sbr/fmt_scan.c
     cptrimmed():
     cpstripped():
 	wcwidth()の戻り値が正しくないケースに対応。
-	(wcwidth()を修正するのが筋だが…
-         印字幅が不明(-1)か1の場合、文字コードが8bitに収まらない
-	 ときには印字幅を2とみなす。
-	 印字幅を過大評価する場合もあるが、溢れるよりはよい。)
+	(wcwidth()を(つまり*/LC_CTYPEファイルを)修正するのが筋だが…
+         eucJP専用にeucjpwcwidth()を追加)
 
 sbr/utils.c
     nmh_init():
