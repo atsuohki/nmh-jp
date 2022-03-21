@@ -561,33 +561,18 @@
  
  #ifdef HAVE_ICONV
 --- sbr/fmt_scan.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/fmt_scan.c	2022-03-21 21:09:59.181889000 +0900
++++ sbr/fmt_scan.c	2022-03-22 08:11:25.999682000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
  /* fmt_scan.c -- format string interpretation
   *
   * This code is Copyright (c) 2002, by the authors of nmh.  See the
-@@ -125,6 +127,14 @@
-     charstring_append_cstring(dest, news);
- }
- 
-+inline static int
-+wcwidth_fix(void)
-+{
-+    char *cp = context_find("wcwidth_fix");
-+
-+    return cp && (strcasecmp(cp, "enable") == 0);
-+}
-+
- /*
-  * copy string from str to dest padding with the fill character to a
-  * size of wid characters. if wid is negative, the string is right
-@@ -141,7 +151,11 @@
+@@ -141,10 +143,18 @@
      int w;
      wchar_t wide_char;
      char *altstr = NULL;
-+    int do_wcwidth_fix = wcwidth_fix();
++    static int do_wcwidth_fix = -1; /* not determined */
 +#if 0
 +    int is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
  #endif
@@ -595,7 +580,14 @@
      char *sp;          /* current position in source string */
      int prevCtrl = 1;
  
-@@ -180,6 +194,15 @@
++    if (do_wcwidth_fix == -1) {
++	char *cp = context_find("wcwidth_fix");
++	do_wcwidth_fix = cp && (strcasecmp(cp, "enable") == 0);
++    }
+     /* get alignment */
+     rjust = 0;
+     if ((remaining = wid) < 0) {
+@@ -180,6 +190,15 @@
  	    }
  
  	    w = wcwidth(wide_char);
@@ -611,17 +603,22 @@
  
  	    /* If w > remaining, w must be positive. */
  	    if (w > remaining) {
-@@ -249,6 +272,10 @@
+@@ -249,7 +268,15 @@
      int srclen;
      wchar_t rune;
      int w;
-+    int do_wcwidth_fix = wcwidth_fix();
++    static int do_wcwidth_fix = -1; /* not determined */
 +#if 0
 +    int is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
 +#endif
  
++    if (do_wcwidth_fix == -1) {
++	char *cp = context_find("wcwidth_fix");
++	do_wcwidth_fix = cp && (strcasecmp(cp, "enable") == 0);
++    }
      if (!deja_vu) {
          size_t two;
+ 
 @@ -302,6 +329,15 @@
              squash = false;
  
