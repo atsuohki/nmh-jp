@@ -91,9 +91,8 @@ sbr/fmt_scan.c
 	「wcwidth_fix: enable」のとき
 	wcwidth()の戻り値が正しくないケースに対応。
 	(wcwidth()を(つまり*/LC_CTYPEファイルを)修正するのが筋だが…
-	 eucJP  →→ eucjpwcwidth()
-	 それ以外 → 8ビット文字は1コラム、それ以外は2コラム
-	 と処理する)
+	 8ビット文字は1コラム、それ以外は2コラムと処理する。
+	 ただし、eucJPの場合、半角カタカナは1コラムとする。)
 
 sbr/utils.c
     nmh_init():
