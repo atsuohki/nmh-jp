@@ -92,7 +92,9 @@ sbr/fmt_scan.c
 	wcwidth()の戻り値が正しくないケースに対応。
 	(wcwidth()を(つまり*/LC_CTYPEファイルを)修正するのが筋だが…
 	 8ビット文字は1コラム、それ以外は2コラムと処理する。
+#if 0
 	 ただし、eucJPの場合、半角カタカナは1コラムとする。)
+#endif
 
 sbr/utils.c
     nmh_init():

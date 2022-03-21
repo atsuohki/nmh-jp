@@ -561,7 +561,7 @@
  
  #ifdef HAVE_ICONV
 --- sbr/fmt_scan.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/fmt_scan.c	2022-03-21 14:32:21.791565000 +0900
++++ sbr/fmt_scan.c	2022-03-21 21:09:59.181889000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -583,46 +583,57 @@
  /*
   * copy string from str to dest padding with the fill character to a
   * size of wid characters. if wid is negative, the string is right
-@@ -141,6 +151,7 @@
+@@ -141,7 +151,11 @@
      int w;
      wchar_t wide_char;
      char *altstr = NULL;
++    int do_wcwidth_fix = wcwidth_fix();
++#if 0
 +    int is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
  #endif
++#endif
      char *sp;          /* current position in source string */
      int prevCtrl = 1;
-@@ -180,6 +191,13 @@
+ 
+@@ -180,6 +194,15 @@
  	    }
  
  	    w = wcwidth(wide_char);
 +	    /* wcwidth() is buggy for some symbols; need to fix LC_CTYPE data */
-+	    if (wcwidth_fix()) {
++	    if (do_wcwidth_fix) {
 +		if (((w == -1) || (w == 1)) && (wide_char & ~0x0ff))
 +		    w = 2;
++#if 0
 +		if (is_eucjp && (wide_char & ~0x0ff) == 0x08e00)
 +		    w = 1;
++#endif
 +	    }
  
  	    /* If w > remaining, w must be positive. */
  	    if (w > remaining) {
-@@ -249,6 +267,7 @@
+@@ -249,6 +272,10 @@
      int srclen;
      wchar_t rune;
      int w;
++    int do_wcwidth_fix = wcwidth_fix();
++#if 0
 +    int is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
++#endif
  
      if (!deja_vu) {
          size_t two;
-@@ -302,6 +321,13 @@
+@@ -302,6 +329,15 @@
              squash = false;
  
          w = wcwidth(rune);
 +	/* wcwidth() is buggy for some symbols; need to fix LC_CTYPE data */
-+	if (wcwidth_fix()) {
++	if (do_wcwidth_fix) {
 +	    if (((w == -1) || (w == 1)) && (rune & ~0x0ff))
 +		w = 2;
++#if 0
 +	    if (is_eucjp && (rune & ~0x0ff) == 0x08e00)
 +		w = 1;
++#endif
 +	}
          if (w == -1) {
              rune = L'?';
