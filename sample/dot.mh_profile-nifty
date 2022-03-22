@@ -37,3 +37,4 @@ credentials: file:.mh.cred
 encode_atom_wise: enable
 scan_text_plain: enable
 force_8bit: enable
+wcwidth_fix: enable

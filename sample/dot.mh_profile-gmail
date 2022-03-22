@@ -41,3 +41,4 @@ Local-Mailbox: =?iso-2022-jp?B?[Base64EncodedString]?= <mailaddress>
 encode_atom_wise: enable
 scan_text_plain: enable
 force_8bit: enable
+wcwidth_fix: enable
