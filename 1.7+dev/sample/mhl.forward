@@ -1,0 +1,11 @@
+width=80,overflowtext=,overflowoffset=10
+leftadjust,compress,compwidth=9
+Date:formatfield="%<(nodate{text})%{text}%|%(tws{text})%>"
+From:formatfield="%(decode{text})"
+To:formatfield="%(decode{text})"
+cc:formatfield="%(decode{text})"
+Subject:formatfield="%(decode{text})"
+:
+body:nocomponent,overflowoffset=0,nocompress,\
+format,\
+formatarg=":=HDRT=:%{content-type}:=HDRE=:%{content-transfer-encoding}"
