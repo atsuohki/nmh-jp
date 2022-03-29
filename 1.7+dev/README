@@ -21,6 +21,29 @@
 
  1.7+dev に対応中
 
+2022/03/29
+
+ nmh 自体ではなく、emacs27以降のMH-E関連の問題。
+
+	From: %(decode(localmbox))
+	Cc: %(decode(localmbox))
+	To: 
+	Subject: 
+	Mime-Version: 1.0
+	Content-Type: text/plain; charset=iso-2022-jp
+	Content-Transfer-Encoding: 7bit
+	--------
+
+ のような components ファイルを用いるとcharsetパラメータが
+ 重複して表れる。
+
+ 原因：
+  (mh-send-letter)@mh-e/mh-comp.el から(間接的に)呼ばれる
+  (message-encode-message-body)@gnus/message.el において 
+  ヘッダーフィールド Content-Type: xxx;yyy;… をフェッチするが、
+  (mml-generate-mime multy ctype)@gnus/mml.el が仮定する
+  ctype の値は、xxx のみである必要がある。
+
 2022/03/21
 
  (現ローケルのLC_CTYPEファイル内の定義不備に起因する)
@@ -53,6 +76,25 @@ wcwidth_fix: enable		表示文字幅の簡易補正(8ビット文字は1コラム、
 				現行ローケルのLC_CTYPEファイル内の
 				文字幅データに不備がある場合の処置
 #------------------------------------------------------------------------
+
+ components ファイル
+	From: %(decode(localmbox))
+	Cc: %(decode(localmbox))
+	To: 
+	Subject: 
+	Mime-Version: 1.0
+	Content-Type: text/plain; charset=iso-2022-jp
+	Content-Transfer-Encoding: 7bit
+	--------
+ の中に mime 関連のヘッダーフィールド(最後の3行)があると、
+ comp コマンド等ではエラーになるが、これらのヘッダーより前に
+ iso-2022-jp 文字がある場合にはエラーにならないように
+ mhbuildコマンド(uip/mhbuildsbr.c) を修正。
+ 現状、mime 関連のヘッダーフィールドがなくても、
+ 本文が iso-2022-jp 文字の場合には
+	Content-Type: text/plain; charset=iso-2022-jp
+ が付加されるように修正。
+
 scanコマンドのサマリー表示/showコマンドの改善
 
 h/mh.h
