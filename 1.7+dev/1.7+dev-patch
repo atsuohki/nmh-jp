@@ -42,8 +42,26 @@
  
  /*
   * This module implements an interface to SendMail very similar
+--- sbr/check_charset.c-ORIG	2018-04-12 23:11:54.000000000 +0900
++++ sbr/check_charset.c	2022-03-31 21:00:16.079878000 +0900
+@@ -1,3 +1,5 @@
++/* -*- mode: c; c-basic-offset: 4; -*- */
++
+ /* check_charset.c -- routines for character sets
+  *
+  * This code is Copyright (c) 2002, by the authors of nmh.  See the
+@@ -130,6 +132,9 @@
+         /* Names for ISO-8859-11. */
+         { "TIS-620", "ISO-8859-11" },
+         { "TIS620.2533", "ISO-8859-11" },
++	/* locale charset -> IANA charset */
++	{ "eucJP", "EUC-JP" },
++	{ "eucjp", "EUC-JP" },
+         { NULL, NULL }
+     };
+     static struct {
 --- sbr/encode_rfc2047.c-ORIG	2022-02-27 10:16:28.224940000 +0900
-+++ sbr/encode_rfc2047.c	2022-03-21 23:35:23.563049000 +0900
++++ sbr/encode_rfc2047.c	2022-03-31 21:02:34.066826000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -380,7 +398,7 @@
 +		if (!strcasecmp(charset, "UTF-8")) {
 +		    while (l > 0 && ((*(p + l) & 0xc0) == 0x80))
 +			l--;
-+		} else if (!strcasecmp(charset, "EUCJP") &&
++		} else if (!strcasecmp(charset, "EUC-JP") &&
 +			   (*(p + l - 1) & 0x80)) { /* middle of multi-byte? */
 +		    int i = 0, j = 0;
 +		    while ((i += j) < l) {
@@ -575,7 +593,7 @@
 + */
 +int decode_b64q(char *src, char *dst);
 --- sbr/fmt_scan.c-ORIG	2022-02-28 07:52:25.604012000 +0900
-+++ sbr/fmt_scan.c	2022-03-21 23:33:33.623308000 +0900
++++ sbr/fmt_scan.c	2022-03-31 21:01:03.328622000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -597,8 +615,8 @@
 +    static bool once_done = false; /* not determined */
 +    static bool do_wcwidth_fix = false;
 +#if 0
-+    bool is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
-+    bool is_utf8 = strcasecmp(get_charset(), "UTF-8P") == 0;
++    bool is_eucjp = strcasecmp(get_charset(), "EUC-JP") == 0;
++    bool is_utf8 = strcasecmp(get_charset(), "UTF-8") == 0;
  #endif
 +#endif
      char *sp;          /* current position in source string */
@@ -637,7 +655,7 @@
 +    static bool once_done = false; /* not determined */
 +    static bool do_wcwidth_fix = false;
 +#if 0
-+    bool is_eucjp = strcasecmp(get_charset(), "eucJP") == 0;
++    bool is_eucjp = strcasecmp(get_charset(), "EUC-JP") == 0;
 +    bool is_utf8 = strcasecmp(get_charset(), "UTF-8") == 0;
 +#endif
  
@@ -825,7 +843,7 @@
          if (context_version == NULL  ||  old_version < current_version) {
              context_replace ("Version", "nmh-" VERSION);
 --- uip/mhbuildsbr.c-ORIG	2022-03-28 07:59:47.018440000 +0900
-+++ uip/mhbuildsbr.c	2022-03-29 16:05:24.085870000 +0900
++++ uip/mhbuildsbr.c	2022-03-29 22:54:25.464786000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
