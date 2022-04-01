@@ -40,6 +40,10 @@
   mml-generate-mimeは、"charset=…" の有無にかかわらず、
   単に、ctypeの末尾に "; charset=…" を追加する。
 
+  mh-send-letter にて、"Content-Type: xxx;yyy;…" があり、
+  "charset=…"が指定されていたら、これを mm-coding-system-priorities
+  の先頭に追加してからmime化を行う。
+
   ⇒ ext-patch-27.x を参照
 
 2022/03/21
