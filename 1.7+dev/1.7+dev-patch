@@ -61,7 +61,7 @@
      };
      static struct {
 --- sbr/encode_rfc2047.c-ORIG	2022-02-27 10:16:28.224940000 +0900
-+++ sbr/encode_rfc2047.c	2022-03-31 21:02:34.066826000 +0900
++++ sbr/encode_rfc2047.c	2022-04-01 18:19:34.223985000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -97,19 +97,26 @@
  	if (isascii((unsigned char) *p)) {
  	    asciicount++;
  	    if (qpspecial((unsigned char) *p))
-@@ -87,6 +98,11 @@
+@@ -87,6 +98,18 @@
  	    eightbitcount++;
      }
  
 +    if (has_iso_2022_jp) {
-+	charset = "iso-2022-jp";
++	charset = "ISO-2022-JP";
 +	encoding = CE_BASE64;
++    } else if (eightbitcount > 0) {
++	if ((p = find_euc_utf(*value))) {
++	    charset = p;
++	    /* base64 length vs quoted-printable length */
++	    if ((eightbitcount+asciicount+2)/3*4 > eightbitcount*3 + asciicount)
++		encoding =CE_QUOTED;
++	}
 +    }
 +
      if (eightbitcount == 0)
  	return 0;
  
-@@ -311,7 +327,338 @@
+@@ -311,7 +334,338 @@
      return 0;
  }
  
@@ -448,7 +455,7 @@
   * Encode our specified header (or field) using base64.
   *
   * This is a little easier since every character gets encoded, we can
-@@ -325,6 +672,17 @@
+@@ -325,6 +679,17 @@
      int outlen = 0, numencode, curlen;
      char *output = NULL, *p = *value, *q = NULL, *linestart = NULL;
  
@@ -466,7 +473,7 @@
      /*
       * Skip over any leading white space.
       */
-@@ -825,6 +1183,12 @@
+@@ -825,6 +1190,12 @@
      *specialchars = 0;
  
      for (; *string != '\0'; string++) {
@@ -810,7 +817,7 @@
  	    n++;
  	    if ( input[n] != '\0')
 --- sbr/utils.c-ORIG	2021-05-25 23:02:00.339298000 +0900
-+++ sbr/utils.c	2021-05-25 23:02:00.348916000 +0900
++++ sbr/utils.c	2022-04-01 18:44:35.394863000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -842,8 +849,98 @@
  
          if (context_version == NULL  ||  old_version < current_version) {
              context_replace ("Version", "nmh-" VERSION);
+@@ -725,4 +730,81 @@
+     return num_chars > 0  &&  (width == 0 || (unsigned int) num_chars <= width)
+         ? buffer
+         : "?";
++}
++
++/*
++ * find whether euc-jp or utf-8
++ */
++char *
++find_euc_utf(char *str)
++{
++  int ch;
++  int euc_st = 0, euc_seen = 0;
++  int utf_st = 0, utf_seen = 0;
++  int result = 0; /* 0x01 -> euc-jp, 0x02 -> utf-8 */
++  char *r[4] = {
++    NULL,
++    "EUC-JP",
++    "UTF-8",
++    NULL};
++
++  while ((ch = (unsigned char)(*str++))) {
++    if (0 < ch && ch <= 0x07f) {
++      if (euc_st > 0) euc_st = -1;
++      if (utf_st > 0) utf_st = -1;
++      continue;
++    }
++    /* check for euc */
++    if (euc_st == 0) {
++      if (ch == 0x08e) {
++	euc_st = 1; /* need second byte (hankaku kana) */
++	goto check_utf;
++      }
++      if (ch == 0x08f) {
++	euc_st = 2; /* need 2 bytes */
++	goto check_utf;
++      }
++      if (0x0a1 <= ch && ch <= 0x0fe) {
++	euc_st = 1; /* need second byte */
++	goto check_utf;
++      }
++      /* other 8-bit char */
++      if (ch & ~0x07f)
++	euc_st = -1;
++      goto check_utf;
++    }
++    if (euc_st > 0) {
++      if (0x0a1 <= ch && ch <= 0x0fe) {
++	if (--euc_st == 0) euc_seen++;
++	goto check_utf;
++      }
++      /* non euc char in middle of sequnce */
++      euc_st = -1;
++      /* fall through */
++    }
++
++  check_utf:
++    /* check for utf */
++    if (utf_st == 0) {
++      if ((ch & 0x0e0) == 0x0c0) utf_st = 1;      /* head of 2-byte sequence */
++      else if ((ch & 0x0f0) == 0x0e0) utf_st = 2; /* head of 3-byte sequence */
++      else if ((ch & 0x0f8) == 0x0f0) utf_st = 3; /* head of 4-byte sequence */
++      /* 5- and 6-byte sequence are obsolete */
++      else if (ch & ~0x07f) utf_st = -1; /* other 8-bit char */
++      continue;
++    }
++    if (utf_st > 0) {
++      if ((ch & 0x0c0) == 0x080) {
++	if (--utf_st == 0) utf_seen++;
++	continue;
++      }
++      /* non utf char in middle of sequnce */
++      utf_st = -1;
++    }
++  }
++
++  if (euc_st == 0 && euc_seen > 0) result |= 0x01;
++  if (utf_st == 0 && utf_seen > 0) result |= 0x02;
++
++  return r[result];
+ }
+--- sbr/utils.h-ORIG	2021-05-25 23:02:00.351766000 +0900
++++ sbr/utils.h	2022-04-01 16:48:55.953946000 +0900
+@@ -88,3 +88,5 @@
+ 
+ char *m_str(int);
+ char *m_strn(int, unsigned int);
++
++char *find_euc_utf(char *);
 --- uip/mhbuildsbr.c-ORIG	2022-03-28 07:59:47.018440000 +0900
-+++ uip/mhbuildsbr.c	2022-03-29 22:54:25.464786000 +0900
++++ uip/mhbuildsbr.c	2022-04-01 18:20:55.779286000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -854,7 +951,7 @@
      m_getfld_state_t gstate;
      struct attach_list *attach_head = NULL, *attach_tail = NULL, *at_entry;
      convert_list *convert_head = NULL, *convert_tail = NULL, *convert;
-+    bool has_jp7_headers = false;
++    bool has_nonascii_headers = false;
 +    char *ctype_p = NULL;
  
      directive_init(directives);
@@ -863,7 +960,7 @@
  	case FLDPLUS:
  	    compnum++;
  
-+	    if (has_jp7_headers) goto skip;
++	    if (has_nonascii_headers) goto skip;
  	    /*
  	     * If we are running with autobuild set, then silently
  	     * exit if we find a MIME-Version header.  For any other MIME
@@ -875,16 +972,17 @@
  	    /* get copies of the buffers */
  	    np = mh_xstrdup(name);
  	    vp = mh_xstrdup(buf);
-@@ -212,6 +218,23 @@
+@@ -212,6 +218,24 @@
  		vp = add (buf, vp);	/* add to previous value */
  	    }
  
 +	    {   char *q;
 +		if (jp7_bgn_seq(vp, q) || jp7_bgn_seq1(vp, q)) {
-+		    has_jp7_headers = true;
++		    has_nonascii_headers = true;
 +		}
 +	    }
-+	    if (has_jp7_headers) {
++	    if (find_euc_utf(vp)) has_nonascii_headers = true;
++	    if (has_nonascii_headers) {
 +		if (strcasecmp(TYPE_FIELD, np) == 0) {
 +		    free(np);
 +		    ctype_p = vp; continue;
@@ -899,7 +997,7 @@
  	    /*
  	     * Now add the header data to the list, unless it's an attach
  	     * header; in that case, add it to our attach list
-@@ -582,6 +605,10 @@
+@@ -582,6 +606,10 @@
  
  	free_content (ct);
  	ct = p;
@@ -910,15 +1008,16 @@
      } else {
  	set_id (ct, 1);
      }
-@@ -1441,6 +1468,7 @@
+@@ -1441,6 +1469,8 @@
      struct text *t = NULL;
      FILE *in = NULL;
      CE ce = &ct->c_cefile;
 +    bool has_iso_2022_jp = false, is_text = false;
++    char *cs8 = NULL;
  
      /*
       * handle multipart by scanning all subparts
-@@ -1480,6 +1508,7 @@
+@@ -1480,6 +1510,7 @@
       */
  
      if (ct->c_type == CT_TEXT) {
@@ -926,7 +1025,7 @@
  	t = (struct text *) ct->c_ctparams;
  	if (t->tx_charset == CHARSET_UNSPECIFIED) {
  	    checknul = true;
-@@ -1575,6 +1604,14 @@
+@@ -1575,6 +1606,14 @@
  	     */
  	    for (cp = bufp; (check8bit || checknul) &&
  					cp < bufp + gotlen; cp++) {
@@ -941,7 +1040,17 @@
  		if (!isascii ((unsigned char) *cp)) {
  		    contains8bit = true;
  		    check8bit = false;	/* no need to keep checking */
-@@ -1667,6 +1704,12 @@
+@@ -1584,6 +1623,9 @@
+ 		    checknul = false;	/* no need to keep checking */
+ 		}
+ 	    }
++	    if (is_text && cs8 == NULL && (cp = find_euc_utf(bufp))) {
++		cs8 = cp;
++	    }
+ 
+ 	    /*
+ 	     * Check line length.
+@@ -1667,6 +1709,19 @@
              else
                   ct->c_encoding = CE_7BIT;
  
@@ -949,12 +1058,19 @@
 +		ct->c_encoding = CE_7BIT; /* force 7bit */
 +		CI ci = &ct->c_ctinfo;
 +		replace_param(&ci->ci_first_pm, &ci->ci_last_pm,
-+			      "charset", "iso-2022-jp", 0);
++			      "charset", "ISO-2022-JP", 0);
 +	    }
++	    if (is_text && cs8) {
++		ct->c_encoding = CE_8BIT; /* force 8bit */
++		CI ci = &ct->c_ctinfo;
++		replace_param(&ci->ci_first_pm, &ci->ci_last_pm,
++			      "charset", cs8, 0);
++	    }
++
  	    break;
  
  	case CT_APPLICATION:
-@@ -1766,7 +1809,20 @@
+@@ -1766,7 +1821,20 @@
       * the Content-Type line.
       */
      if (ci->ci_comment) {
@@ -976,7 +1092,7 @@
  	if (len + 1 + (cc = 2 + strlen (ci->ci_comment)) >= CPERLIN) {
  	    vp = add ("\n\t", vp);
  	    len = 8;
-@@ -2150,7 +2206,7 @@
+@@ -2150,7 +2218,7 @@
                         "character set is US-ASCII");
              }
  

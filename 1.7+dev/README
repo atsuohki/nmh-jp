@@ -21,6 +21,16 @@
 
  1.7+dev に対応中
 
+2022/04/01
+
+ ◎ comp/repl/forw では、ドラフトファイルの文字コード(iso-2022-jp,euc-jp,utf-8)
+ に従ってcharsetを設定する。
+ (不明の8ビットコードの場合には、プロファイルのlocaleに従う)
+
+ ◎ ME-E(mh-send-letter)では、ドラフトファイルの文字コードにかかわらず
+ Content-Typeのcharset指定に従う。
+ (未指定の場合には、mm-coding-system-priorities に従う)
+
 2022/03/29
 
  nmh 自体ではなく、emacs27以降のMH-E関連の問題。
