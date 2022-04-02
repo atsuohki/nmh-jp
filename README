@@ -16,6 +16,18 @@
 ==========================================================================
 === 変更履歴
 ==========================================================================
+#------------------------------------------------------------------------
+◎ .mh_profile への追加項目
+encode_atom_wise: enable	atom毎にエンコードする
+scan_text_plain: enable		scan時、adhocな方法で text/plain 部分を探す
+force_8bit: enable		ローケルが UTF-8 以外でも8ビット透過で表示
+wcwidth_fix: enable		表示文字幅の簡易補正(8ビット文字は1コラム、
+				それ以外は2コラム)を有効にする。
+				現行ローケルのLC_CTYPEファイル内の
+				文字幅データに不備がある場合の処置
+guess_8bit_charset: enable	8bit文字コードが euc-jp か utf-8 かを判定する
+#------------------------------------------------------------------------
+
 2022/04/01
 
  ◎ comp/repl/forw では、ドラフトファイルの文字コード(iso-2022-jp,euc-jp,utf-8)
@@ -77,15 +89,24 @@
  test/format/test-mynameの"GECOS field test"に失敗する。
 
 #------------------------------------------------------------------------
-◎ .mh_profile への追加項目
-encode_atom_wise: enable	atom毎にエンコードする
-scan_text_plain: enable		scan時、adhocな方法で text/plain 部分を探す
-force_8bit: enable		ローケルが UTF-8 以外でも8ビット透過で表示
-wcwidth_fix: enable		表示文字幅の簡易補正(8ビット文字は1コラム、
-				それ以外は2コラム)を有効にする。
-				現行ローケルのLC_CTYPEファイル内の
-				文字幅データに不備がある場合の処置
-guess_8bit_charset: enable	8bit文字コードが euc-jp か utf-8 かを判定する
+ components ファイル
+	From: %(decode(localmbox))
+	Cc: %(decode(localmbox))
+	To: 
+	Subject: 
+	Mime-Version: 1.0
+	Content-Type: text/plain; charset=iso-2022-jp
+	Content-Transfer-Encoding: 7bit
+	--------
+ の中に mime 関連のヘッダーフィールド(最後の3行)を指定できる。
+
+ 現状、mime 関連のヘッダーフィールドがなくても、
+ 本文が iso-2022-jp 文字の場合には
+	Content-Type: text/plain; charset=iso-2022-jp
+ が付加されるように修正。
+ 「guess_8bit_charset: enable」のときには、euc-jp か utf-8 の場合にも同様。
+ つまり、charsetの指定よりも、ドラフトファイルの実際の文字コードを優先。
+
 #------------------------------------------------------------------------
 scanコマンドのサマリー表示/showコマンドの改善
 
@@ -94,6 +115,7 @@ h/mh.h
 
 h/prototypes.h
 	decode_b64q() 追加
+	find_euc_utf() 追加
 
 uip/scansbr.c
     scan():
@@ -115,11 +137,11 @@ uip/mhshowsbr.c
 uip/mhlsbr.c
     putcomp():
 	「force_8bit: enable」のとき
-	ヘッダの表示において、localeがUTF-8でない場合に、
+	ヘッダの表示において、localeがUTF-8でない場合にも、
 	7bitに強制する処理を無効化。
 
 sbr/fmt_rfc2047.c
-    decode_b64q():
+    decode_b64q(): 追加
 	base64エンコードの4バイトを3バイトにデコード。
 
     decode_rfc2047():
@@ -147,6 +169,11 @@ sbr/utils.c
 
 	LC_ALL を LC_CTYPE に変更
 
+    find_euc_utf(): 追加
+	「guess_8bit_charset: enable」のとき
+	与えられた文字列のcharset(euc-jp、utf-8)を返す。
+	判別不可の場合は、NULLを返す。
+
 #----------------------------------
 mhlistコマンド
 
@@ -161,6 +188,8 @@ sbr/encode_rfc2047.c
     encode_rfc204():
 	ヘッダフィールドにiso-2022-jpコードを含む場合、
 	文字セットをiso-2022-jp、base64符号化を使用するように変更。
+	「guess_8bit_charset: enable」のとき、euc-jpかutf-8に従って
+	base64かquoted-printableで符号化を使用する。
 
     field_encode_base64():
 	「encode_atom_wise: enable」のとき、
@@ -187,6 +216,8 @@ uip/mhbuildsbr.c
 	テキスト部分にiso-2022-jpコードシーケンスを含む場合、
 	「Content-Type: text/plain; charset="iso-2022-jp"」
 	を追加する処理。
+	「guess_8bit_charset: enable」のとき、euc-jpやutf-8も
+	同様に処理。
 
 	なお、オリジナルでは、7ビットコードは us-ascii、
 	8ビットコードは	profileの「locale: 」をcharsetとする。
