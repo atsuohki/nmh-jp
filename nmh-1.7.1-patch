@@ -795,7 +795,7 @@
  	    n++;
  	    if ( input[n] != '\0')
 --- sbr/utils.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/utils.c	2022-04-01 21:31:20.842157000 +0900
++++ sbr/utils.c	2022-04-02 16:01:39.207162000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -818,7 +818,7 @@
          inform("setlocale failed, check your LC_ALL, LC_CTYPE, and LANG "
  	    "environment variables, continuing...");
      }
-@@ -601,4 +606,90 @@
+@@ -601,4 +606,76 @@
      return num_chars > 0  &&  (width == 0 || (unsigned int) num_chars <= width)
          ? buffer
          : "?";
@@ -839,68 +839,54 @@
 +    "EUC-JP",
 +    "UTF-8",
 +    NULL};
-+  static int guess_8bit_charset = -1; /* not determined */
 +
-+  if (guess_8bit_charset < 0) {
++  static bool once_done = false; /* not determined */
++  static bool guess_8bit_charset = false;
++
++  if (!once_done) {
 +      char *cp = context_find("guess_8bit_charset");
 +      guess_8bit_charset = cp && strcasecmp(cp, "enable") == 0;
++      once_done = true;
 +  }
 +
 +  if (!guess_8bit_charset)
 +      return NULL;
 +
-+  while ((ch = (unsigned char)(*str++))) {
++  while ((euc_st >= 0 || utf_st >= 0) && (ch = (unsigned char)(*str++))) {
 +    if (0 < ch && ch <= 0x07f) {
 +      if (euc_st > 0) euc_st = -1;
 +      if (utf_st > 0) utf_st = -1;
 +      continue;
 +    }
 +    /* check for euc */
-+    if (euc_st == 0) {
-+      if (ch == 0x08e) {
-+	euc_st = 1; /* need second byte (hankaku kana) */
-+	goto check_utf;
-+      }
-+      if (ch == 0x08f) {
-+	euc_st = 2; /* need 2 bytes */
-+	goto check_utf;
-+      }
-+      if (0x0a1 <= ch && ch <= 0x0fe) {
-+	euc_st = 1; /* need second byte */
-+	goto check_utf;
-+      }
-+      /* other 8-bit char */
-+      if (ch & ~0x07f)
-+	euc_st = -1;
-+      goto check_utf;
-+    }
 +    if (euc_st > 0) {
 +      if (0x0a1 <= ch && ch <= 0x0fe) {
 +	if (--euc_st == 0) euc_seen++;
-+	goto check_utf;
-+      }
-+      /* non euc char in middle of sequnce */
-+      euc_st = -1;
-+      /* fall through */
++      } else
++	euc_st = -1; /* non euc char in middle of sequnce */
++    } else if (euc_st == 0) {
++      if (0x0a1 <= ch && ch <= 0x0fe) {
++	euc_st = 1; /* need second byte */
++      } else if (ch == 0x08f) {
++	euc_st = 2; /* need 2 bytes */
++      } else if (ch == 0x08e) {
++	euc_st = 1; /* need second byte (hankaku kana) */
++      } else
++	euc_st = -1; /* other 8-bit char */
 +    }
 +
-+  check_utf:
 +    /* check for utf */
-+    if (utf_st == 0) {
++    if (utf_st > 0) {
++      if ((ch & 0x0c0) == 0x080) {
++	if (--utf_st == 0) utf_seen++;
++      } else
++	utf_st = -1; /* non utf char in middle of sequnce */
++    } else if (utf_st == 0) {
 +      if ((ch & 0x0e0) == 0x0c0) utf_st = 1;      /* head of 2-byte sequence */
 +      else if ((ch & 0x0f0) == 0x0e0) utf_st = 2; /* head of 3-byte sequence */
 +      else if ((ch & 0x0f8) == 0x0f0) utf_st = 3; /* head of 4-byte sequence */
 +      /* 5- and 6-byte sequence are obsolete */
-+      else if (ch & ~0x07f) utf_st = -1; /* other 8-bit char */
-+      continue;
-+    }
-+    if (utf_st > 0) {
-+      if ((ch & 0x0c0) == 0x080) {
-+	if (--utf_st == 0) utf_seen++;
-+	continue;
-+      }
-+      /* non utf char in middle of sequnce */
-+      utf_st = -1;
++      else utf_st = -1; /* other 8-bit char */
 +    }
 +  }
 +
