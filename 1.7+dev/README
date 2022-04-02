@@ -24,11 +24,11 @@
 2022/04/01
 
  ◎ comp/repl/forw では、ドラフトファイルの文字コード(iso-2022-jp,euc-jp,utf-8)
- に従ってcharsetを設定する。
+ に従ってcharsetを設定する。("guess_8bit_charset: enable")
  (不明の8ビットコードの場合には、プロファイルのlocaleに従う)
 
  ◎ ME-E(mh-send-letter)では、ドラフトファイルの文字コードにかかわらず
- Content-Typeのcharset指定に従う。
+ Content-Typeのcharset指定に従う。(カスタマイズ変数 mh-letter-use-charset)
  (未指定の場合には、mm-coding-system-priorities に従う)
 
 2022/03/29
@@ -65,6 +65,7 @@
 
  (現ローケルのLC_CTYPEファイル内の定義不備に起因する)
  wcwidth()の戻り値の不具合に対する処理方法を変更。
+ ("wcwidth_fix: enable")
 
 2019/02/12
 
@@ -92,6 +93,7 @@ wcwidth_fix: enable		表示文字幅の簡易補正(8ビット文字は1コラム、
 				それ以外は2コラム)を有効にする。
 				現行ローケルのLC_CTYPEファイル内の
 				文字幅データに不備がある場合の処置
+guess_8bit_charset: enable	8bit文字コードが euc-jp か utf-8 かを判定する
 #------------------------------------------------------------------------
 
  components ファイル

@@ -4,6 +4,6 @@ Cc: %(decode(localmbox))
 %<{nmh-cc}%(void(width))%(putaddr cc: )%|cc:%>
 Subject:%<{nmh-subject} %(trim)%(putlit)%?{subject} FW: %(decode{subject})%>
 Mime-Version: 1.0
-Content-Type: text/plain;charset="iso-2022-jp"
+Content-Type: text/plain; charset=iso-2022-jp
 Content-Transfer-Encoding: 7bit
 --------

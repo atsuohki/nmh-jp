@@ -24,6 +24,6 @@ Comments: In-reply-to \
 %(void(decode))%(trim)%(putstr)\n\
    message dated "%<(nodate{date})%{date}%|%(tws{date})%>."
 Mime-Version: 1.0
-Content-Type: text/plain;charset="iso-2022-jp"
+Content-Type: text/plain; charset=iso-2022-jp
 Content-Transfer-Encoding: 7bit
 --------
