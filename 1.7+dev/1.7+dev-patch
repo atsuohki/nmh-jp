@@ -935,7 +935,7 @@
 +
 +char *find_euc_utf(char *);
 --- uip/mhbuildsbr.c-ORIG	2022-03-28 07:59:47.018440000 +0900
-+++ uip/mhbuildsbr.c	2022-04-01 18:20:55.779286000 +0900
++++ uip/mhbuildsbr.c	2022-04-03 08:05:45.895777000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -971,13 +971,13 @@
  		vp = add (buf, vp);	/* add to previous value */
  	    }
  
-+	    {   char *q;
-+		if (jp7_bgn_seq(vp, q) || jp7_bgn_seq1(vp, q)) {
++	    if (!has_nonascii_headers) {
++		/* still check nonascii headers */
++		char *q;
++		if (jp7_bgn_seq(vp, q) || jp7_bgn_seq1(vp, q) || find_euc_utf(vp))
 +		    has_nonascii_headers = true;
-+		}
-+	    }
-+	    if (find_euc_utf(vp)) has_nonascii_headers = true;
-+	    if (has_nonascii_headers) {
++	    } else  {
++		/* has nonascii headers */
 +		if (strcasecmp(TYPE_FIELD, np) == 0) {
 +		    free(np);
 +		    ctype_p = vp; continue;
