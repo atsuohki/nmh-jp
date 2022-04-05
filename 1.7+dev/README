@@ -35,13 +35,15 @@ guess_8bit_charset: enable	euc-jp/utf-8/shift_jis を判定する
 
 2022/04/01
 
- ◎ comp/repl/forw では、ドラフトファイルの文字コード(iso-2022-jp,euc-jp,utf-8)
- に従ってcharsetを設定する。("guess_8bit_charset: enable")
+ ◎ comp/repl/forw では、ドラフトファイルの文字コード
+ (iso-2022-jp,euc-jp,utf-8,shift_jis)に従ってcharsetを設定する。
+ ("guess_8bit_charset: enable")
  (不明の8ビットコードの場合には、プロファイルのlocaleに従う)
 
  ◎ ME-E(mh-send-letter)では、ドラフトファイルの文字コードにかかわらず
  Content-Typeのcharset指定に従う。(カスタマイズ変数 mh-letter-use-charset)
  (未指定の場合には、mm-coding-system-priorities に従う)
+  ⇒ ext-patch-27.x を参照
 
 2022/03/29
 
@@ -115,7 +117,7 @@ guess_8bit_charset: enable	euc-jp/utf-8/shift_jis を判定する
  本文が iso-2022-jp 文字の場合には
 	Content-Type: text/plain; charset=iso-2022-jp
  が付加されるように修正。
- 「guess_8bit_charset: enable」のときには、euc-jp か utf-8 の場合にも同様。
+ 「guess_8bit_charset: enable」のときには、euc-jp/utf-8/shift_jis の場合にも同様。
  つまり、charsetの有無にかかわらず、ドラフトファイルの文字コードを優先。
 
 #------------------------------------------------------------------------
@@ -177,12 +179,12 @@ sbr/utils.c
 
 	LC_ALL を LC_CTYPE に変更
 
-	find_euc_utf_sjis(): find_euc_utf()を変更
+    find_euc_utf_sjis(): find_euc_utf() から変更
 	「guess_8bit_charset: enable」のとき
 	与えられた文字列のcharset(euc-jp、utf-8、shift_jis)を返す。
 	euc-jpとshift_jisの区別がつかない場合にはeuc-jpとする。
 	utf-8とshift_jisの区別がつかない場合にはutf-8とする。
-	判別不可の場合は、NULLを返す。
+	それ以外の場合は、NULLを返す。
 
 #----------------------------------
 mhlistコマンド

@@ -830,7 +830,7 @@
  	    n++;
  	    if ( input[n] != '\0')
 --- sbr/utils.c-ORIG	2021-05-25 23:02:00.339298000 +0900
-+++ sbr/utils.c	2022-04-04 14:44:44.384569000 +0900
++++ sbr/utils.c	2022-04-05 20:08:05.722676000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -862,7 +862,7 @@
  
          if (context_version == NULL  ||  old_version < current_version) {
              context_replace ("Version", "nmh-" VERSION);
-@@ -725,4 +730,86 @@
+@@ -725,4 +730,87 @@
      return num_chars > 0  &&  (width == 0 || (unsigned int) num_chars <= width)
          ? buffer
          : "?";
@@ -939,7 +939,8 @@
 +	} else if (sjis_st == 0) {
 +	    if ((0x081 <= ch && ch <= 0x09f) ||
 +		(0x0e0 <= ch && ch <= 0x0fc)) sjis_st = 1;
-+	    /* others are valid */
++	    else if ((ch == 0x080) || (ch == 0x0a0) || (0x0fd <= ch))
++		sjis_st = -1; /* other 8-bit char */
 +	}
 +    }
 +
@@ -958,7 +959,7 @@
 +
 +char *find_euc_utf_sjis(char *);
 --- uip/mhbuildsbr.c-ORIG	2022-03-28 07:59:47.018440000 +0900
-+++ uip/mhbuildsbr.c	2022-04-04 14:01:46.421833000 +0900
++++ uip/mhbuildsbr.c	2022-04-05 20:20:19.519009000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -1059,17 +1060,16 @@
  		if (!isascii ((unsigned char) *cp)) {
  		    contains8bit = true;
  		    check8bit = false;	/* no need to keep checking */
-@@ -1584,6 +1624,9 @@
+@@ -1584,6 +1624,8 @@
  		    checknul = false;	/* no need to keep checking */
  		}
  	    }
-+	    if (is_text && cs8 == NULL && (cp = find_euc_utf_sjis(bufp))) {
-+		cs8 = cp;
-+	    }
++	    if (is_text && (cs8 == NULL))
++		cs8 = find_euc_utf_sjis(bufp);
  
  	    /*
  	     * Check line length.
-@@ -1667,6 +1710,19 @@
+@@ -1667,6 +1709,19 @@
              else
                   ct->c_encoding = CE_7BIT;
  
@@ -1089,7 +1089,7 @@
  	    break;
  
  	case CT_APPLICATION:
-@@ -1766,7 +1822,20 @@
+@@ -1766,7 +1821,20 @@
       * the Content-Type line.
       */
      if (ci->ci_comment) {
@@ -1111,7 +1111,7 @@
  	if (len + 1 + (cc = 2 + strlen (ci->ci_comment)) >= CPERLIN) {
  	    vp = add ("\n\t", vp);
  	    len = 8;
-@@ -2150,7 +2219,7 @@
+@@ -2150,7 +2218,7 @@
                         "character set is US-ASCII");
              }
  
