@@ -18,6 +18,10 @@ msgchk:			-host pop.gmail.com -port pop3s -initialtls -sasl -saslmech xoauth2 -a
 scan:	-form scan.mhe
 mhl:	-form mhl.mime
 mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
+# mhlist/mhstore need to have the same -prefer option for mhshow,
+# otherwise part number mismatch will occure for multipart/alternative.
+mhlist:	-prefer text/plain
+mhstore:	-prefer text/plain
 nmh-storage:	/tmp
 send:	-alias aliases -server smtp.gmail.com -port smtps -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID>
 whom:	-alias aliases

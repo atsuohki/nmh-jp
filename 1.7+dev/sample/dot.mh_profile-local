@@ -11,6 +11,10 @@ inc:	-form scan.mhe
 scan:	-form scan.mhe
 mhl:	-form mhl.mime
 mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
+# mhlist/mhstore need to have the same -prefer option for mhshow,
+# otherwise part number mismatch will occure for multipart/alternative.
+mhlist:	-prefer text/plain
+mhstore:	-prefer text/plain
 nmh-storage:	/tmp
 send:	-alias aliases -port smtp
 whom:	-alias aliases

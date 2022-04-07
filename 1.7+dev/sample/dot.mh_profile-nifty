@@ -12,6 +12,10 @@ msgchk:			-host pop.nifty.com -port pop3s -initialtls -sasl
 scan:	-form scan.mhe
 mhl:	-form mhl.mime
 mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
+# mhlist/mhstore need to have the same -prefer option for mhshow,
+# otherwise part number mismatch will occure for multipart/alternative.
+mhlist: -prefer text/plain
+mhstore:        -prefer text/plain
 nmh-storage:	/tmp
 send:	-alias aliases -server smtp.nifty.com -port smtps -initialtls -sasl -saslmech login
 whom:	-alias aliases
