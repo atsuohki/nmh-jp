@@ -2,7 +2,7 @@ Path: MH
 Draft-Folder: drafts
 Folder-Protect: 700
 Msg-Protect: 600
-# specify your favorite editor
+#: specify your favorite editor
 Editor:	emacs-nw
 Aliasfile: aliases
 repl:	-filter mhl.reply
@@ -12,17 +12,17 @@ msgchk:			-host pop.nifty.com -port pop3s -initialtls -sasl
 scan:	-form scan.mhe
 mhl:	-form mhl.mime
 mhshow:	-form mhl.mime -markform mhshow.marker -prefer text/plain
-# mhlist/mhstore need to have the same -prefer option for mhshow,
-# otherwise part number mismatch will occure for multipart/alternative.
+#: mhlist/mhstore need to have the same -prefer option for mhshow,
+#: otherwise part number mismatch will occure for multipart/alternative.
 mhlist: -prefer text/plain
 mhstore:        -prefer text/plain
 nmh-storage:	/tmp
 send:	-alias aliases -server smtp.nifty.com -port smtps -initialtls -sasl -saslmech login
 whom:	-alias aliases
 folder:	-pack 
-# specify your favorite pager
+#: specify your favorite pager
 moreproc:	/usr/local/bin/jless
-# specify filter to compose reply body
+#: specify filter to compose reply body
 formatproc:	<PATH>/repl-formatproc
 #:
 lproc: mhl
