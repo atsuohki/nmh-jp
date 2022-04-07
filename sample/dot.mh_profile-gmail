@@ -7,12 +7,12 @@ Editor:	emacs-nw
 Aliasfile: aliases
 repl:	-filter mhl.reply
 forw:	-filter mhl.forward
-#
+#:
 #: invoke mhlogin as
-#	mhlogin -user <YourGmailID> -saslmech xoauth2 -authservice gmail \
-#		-browser <YourFavoritBrowser>
+#:	mhlogin -user <YourGmailID> -saslmech xoauth2 -authservice gmail \
+#:		-browser <YourFavoritBrowser>
 #: and follow its instruction to generate oauth-gmail
-#
+#:
 inc:	-form scan.mhe	-host pop.gmail.com -port pop3s -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID>
 msgchk:			-host pop.gmail.com -port pop3s -initialtls -sasl -saslmech xoauth2 -authservice gmail -user <YourGmailID> -nocertverify
 scan:	-form scan.mhe
