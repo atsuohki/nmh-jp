@@ -66,25 +66,28 @@
 + */
 +char *find_euc_utf_sjis(char *);
 --- sbr/check_charset.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/check_charset.c	2022-03-31 21:16:26.839937000 +0900
++++ sbr/check_charset.c	2022-04-07 03:15:23.640855000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
  /* check_charset.c -- routines for character sets
   *
   * This code is Copyright (c) 2002, by the authors of nmh.  See the
-@@ -128,6 +130,9 @@
+@@ -128,6 +130,12 @@
          /* Names for ISO-8859-11. */
          { "TIS-620", "ISO-8859-11" },
          { "TIS620.2533", "ISO-8859-11" },
 +	/* locale charset -> IANA charset */
 +	{ "eucJP", "EUC-JP" },
 +	{ "eucjp", "EUC-JP" },
++	{ "EUCJP", "EUC-JP" },
++	{ "SJIS", "SHIFT_JIS" },
++	{ "sjis", "SHIFT_JIS" },
          { NULL, NULL }
      };
      static struct {
 --- sbr/encode_rfc2047.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/encode_rfc2047.c	2022-04-05 20:17:40.921186000 +0900
++++ sbr/encode_rfc2047.c	2022-04-07 03:04:09.199415000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -131,7 +134,7 @@
      if (eightbitcount == 0)
      	return 0;
  
-@@ -307,7 +329,338 @@
+@@ -307,7 +329,348 @@
      return 0;
  }
  
@@ -429,6 +432,16 @@
 +			else j = 1;
 +		    }
 +		    l = i - j;
++		} else if (!strcasecmp(charset, "SHIFT_JIS") &&
++			   (*(p + l - 1) & 0x80)) { /* middle of multi-byte? */
++		    int i = 0, j = 0;
++		    while ((i += j) < l) {
++			int ch = (unsigned char)*(p+i);
++			if ( 0 < ch && ch <= 0x7f || 0xa0 < ch && ch <= 0xdf)
++			    j = 1; /* ascii or half-width kana */
++			else j = 2; /* not precise! */
++		    }
++		    l = i - j;
 +		}
 +	    }
 +
@@ -470,7 +483,7 @@
   * Encode our specified header (or field) using base64.
   *
   * This is a little easier since every character gets encoded, we can
-@@ -321,6 +674,15 @@
+@@ -321,6 +684,15 @@
      int outlen = 0, numencode, curlen;
      char *output = NULL, *p = *value, *q = NULL, *linestart = NULL;
  
@@ -486,7 +499,7 @@
      /*
       * Skip over any leading white space.
       */
-@@ -817,6 +1179,12 @@
+@@ -817,6 +1189,12 @@
      *specialchars = 0;
  
      for (; *string != '\0'; string++) {
@@ -597,7 +610,7 @@
  
  #ifdef HAVE_ICONV
 --- sbr/fmt_scan.c-ORIG	2018-03-07 04:05:55.000000000 +0900
-+++ sbr/fmt_scan.c	2022-03-31 21:16:26.842432000 +0900
++++ sbr/fmt_scan.c	2022-04-07 03:12:16.021526000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -610,7 +623,7 @@
      char *altstr = NULL;
 +    static int do_wcwidth_fix = -1; /* not determined */
 +#if 0
-+    int is_eucjp = strcasecmp(get_charset(), "EUC-jp") == 0;
++    int is_eucjp = strcasecmp(get_charset(), "EUC-JP") == 0;
  #endif
 +#endif
      char *sp;          /* current position in source string */
@@ -645,7 +658,7 @@
      int w;
 +    static int do_wcwidth_fix = -1; /* not determined */
 +#if 0
-+    int is_eucjp = strcasecmp(get_charset(), "EUC-jp") == 0;
++    int is_eucjp = strcasecmp(get_charset(), "EUC-JP") == 0;
 +#endif
  
 +    if (do_wcwidth_fix == -1) {
