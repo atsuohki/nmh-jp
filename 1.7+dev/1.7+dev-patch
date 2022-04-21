@@ -32,9 +32,9 @@
 +			   (strstr(q+4,JP7_ENDB) || strstr(q+4,JP7_ENDJ)) )
  
  #define CTXMOD	0x01		/* context information modified */
---- mts/smtp/smtp.c-ORIG	2022-02-05 14:11:28.653213000 +0900
-+++ mts/smtp/smtp.c	2022-02-05 14:11:28.691998000 +0900
-@@ -19,6 +19,7 @@
+--- mts/smtp/smtp.c-ORIG	2022-04-21 13:18:15.837572000 +0900
++++ mts/smtp/smtp.c	2022-04-21 13:18:15.851060000 +0900
+@@ -21,6 +21,7 @@
  #include <sys/socket.h>
  #include <signal.h>
  #include "sbr/base64.h"
@@ -706,8 +706,8 @@
          if (w == -1) {
              rune = L'?';
              w = wcwidth(rune);
---- sbr/mf.c-ORIG	2021-05-23 08:03:06.473966000 +0900
-+++ sbr/mf.c	2021-05-23 08:03:06.477036000 +0900
+--- sbr/mf.c-ORIG	2022-04-21 13:18:15.855761000 +0900
++++ sbr/mf.c	2022-04-21 13:18:15.859336000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -829,8 +829,8 @@
  	case '\\':
  	    n++;
  	    if ( input[n] != '\0')
---- sbr/utils.c-ORIG	2021-05-25 23:02:00.339298000 +0900
-+++ sbr/utils.c	2022-04-05 20:08:05.722676000 +0900
+--- sbr/utils.c-ORIG	2022-04-21 13:20:34.287855000 +0900
++++ sbr/utils.c	2022-04-21 13:18:15.865960000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
@@ -853,15 +853,6 @@
          inform("setlocale failed, check your LC_ALL, LC_CTYPE, and LANG "
  	    "environment variables, continuing...");
      }
-@@ -618,7 +623,7 @@
-         const float old_version =
-             context_version  &&  has_prefix(context_version, "nmh-")
-             ?  strtof (context_version + 4, NULL)
--            :  99999999;
-+            :  99999999.0;
- 
-         if (context_version == NULL  ||  old_version < current_version) {
-             context_replace ("Version", "nmh-" VERSION);
 @@ -725,4 +730,87 @@
      return num_chars > 0  &&  (width == 0 || (unsigned int) num_chars <= width)
          ? buffer
@@ -1199,7 +1190,7 @@
             UTF-8 locale, as required by RFC 6532. */
  	c1->c_flags |= FORCE7BIT;
 --- uip/mhparse.c-ORIG	2022-03-28 07:59:47.032380000 +0900
-+++ uip/mhparse.c	2022-03-29 16:05:45.861665000 +0900
++++ uip/mhparse.c	2022-04-07 12:45:23.955619000 +0900
 @@ -1,3 +1,5 @@
 +/* -*- mode: c; c-basic-offset: 4; -*- */
 +
