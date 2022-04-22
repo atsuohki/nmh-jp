@@ -1,10 +1,10 @@
 --- lisp/gnus/mm-uu.el-ORIG	2022-04-19 08:37:18.340351000 +0900
-+++ lisp/gnus/mm-uu.el	2022-04-19 10:58:36.152852000 +0900
++++ lisp/gnus/mm-uu.el	2022-04-22 09:34:27.766050000 +0900
 @@ -29,6 +29,7 @@
  (require 'mm-decode)
  (require 'mailcap)
  (require 'mml2015)
-+(require 'message)
++(require 'sendmail)
  (eval-when-compile (require 'cl-lib))
  
  (autoload 'uudecode-decode-region "uudecode")
@@ -25,7 +25,7 @@
 +	     (ct
 +	      (save-restriction
 +		(widen)
-+		(message-narrow-to-headers)
++		(narrow-to-region (point-min) (mail-header-end))
 +		(ignore-errors (mail-header-parse-content-type
 +				(message-fetch-field "Content-Type" t)))))
 +	     (charset (mail-content-type-get ct 'charset)))
@@ -99,8 +99,53 @@
  
  (defun mm-uu-pgp-encrypted-extract ()
 --- lisp/mh-e/mh-mime.el-ORIG	2022-03-11 16:04:21.000000000 +0900
-+++ lisp/mh-e/mh-mime.el	2022-04-19 14:53:42.545072000 +0900
-@@ -1054,7 +1054,8 @@
++++ lisp/mh-e/mh-mime.el	2022-04-22 08:46:49.502092000 +0900
+@@ -514,6 +514,35 @@
+ Optional argument, PRE-DISSECTED-HANDLES is a list of MIME
+ handles. If present they are displayed otherwise the buffer is
+ parsed and then displayed."
++
++  ;; when the message is only text/plain and base64/quoted-printable,
++  ;; decode it first for easy handling.
++  (unless pre-dissected-handles
++    (save-restriction
++     (let (ct cte)
++       (widen)
++       (narrow-to-region (point-min) (mh-mail-header-end))
++       (setq ct (ignore-errors (mail-header-parse-content-type
++                                (message-fetch-field "Content-Type" t)))
++             cte (message-fetch-field "Content-Transfer-Encoding"))
++       (widen)
++       (when (stringp cte) (setq cte (downcase (mail-header-strip-cte cte))))
++       (when (and (consp ct) (equal (car ct) "text/plain"))
++         (when (or (string= cte "quoted-printable")
++                   (string= cte "base64"))
++           (let ((case-fold-search t))
++             ;; fake Content-Transfer-Encoding
++             (goto-char (point-min))
++             (re-search-forward "^Content-Transfer-Encoding"
++                                (mh-mail-header-end) t)
++             (goto-char (line-beginning-position))
++             (insert "X-"))
++           (if (string= cte "quoted-printable")
++               (quoted-printable-decode-region
++                (1+ (mh-mail-header-end)) (point-max))
++             (narrow-to-region (1+ (mh-mail-header-end)) (point-max))
++             (mm-decode-content-transfer-encoding 'base64 "text/plain")))))))
++
+   (let ((handles ())
+         (folder mh-show-folder-buffer)
+         (raw-message-data (buffer-string)))
+@@ -577,7 +606,7 @@
+       (save-restriction
+         (narrow-to-region (min (1+ (mh-mail-header-end)) (point-max))
+                           (point-max))
+-        (mm-decode-body charset
++        (mm-decode-body (or charset 'undecided)
+                         (and cte (intern (downcase cte)))
+                         (car ct))))))
+ 
+@@ -1054,7 +1083,8 @@
       (when (and function (eolp))
         (backward-char))
       (unwind-protect (and function (funcall function data))
