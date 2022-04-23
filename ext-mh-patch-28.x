@@ -99,8 +99,8 @@
  
  (defun mm-uu-pgp-encrypted-extract ()
 --- lisp/mh-e/mh-mime.el-ORIG	2022-03-11 16:04:21.000000000 +0900
-+++ lisp/mh-e/mh-mime.el	2022-04-22 08:46:49.502092000 +0900
-@@ -514,6 +514,35 @@
++++ lisp/mh-e/mh-mime.el	2022-04-23 15:21:16.229919000 +0900
+@@ -514,6 +514,33 @@
  Optional argument, PRE-DISSECTED-HANDLES is a list of MIME
  handles. If present they are displayed otherwise the buffer is
  parsed and then displayed."
@@ -114,12 +114,13 @@
 +       (narrow-to-region (point-min) (mh-mail-header-end))
 +       (setq ct (ignore-errors (mail-header-parse-content-type
 +                                (message-fetch-field "Content-Type" t)))
-+             cte (message-fetch-field "Content-Transfer-Encoding"))
++             cte (message-fetch-field "Content-Transfer-Encoding" t))
 +       (widen)
-+       (when (stringp cte) (setq cte (downcase (mail-header-strip-cte cte))))
-+       (when (and (consp ct) (equal (car ct) "text/plain"))
-+         (when (or (string= cte "quoted-printable")
-+                   (string= cte "base64"))
++       (when (stringp cte)
++         (setq cte (intern (downcase (mail-header-strip-cte cte)))))
++       (when (and (consp ct) (equal (car ct) "text/plain")
++                  (or (eq cte 'quoted-printable)
++                      (eq cte 'base64)))
 +           (let ((case-fold-search t))
 +             ;; fake Content-Transfer-Encoding
 +             (goto-char (point-min))
@@ -127,16 +128,13 @@
 +                                (mh-mail-header-end) t)
 +             (goto-char (line-beginning-position))
 +             (insert "X-"))
-+           (if (string= cte "quoted-printable")
-+               (quoted-printable-decode-region
-+                (1+ (mh-mail-header-end)) (point-max))
-+             (narrow-to-region (1+ (mh-mail-header-end)) (point-max))
-+             (mm-decode-content-transfer-encoding 'base64 "text/plain")))))))
++           (narrow-to-region (1+ (mh-mail-header-end)) (point-max))
++           (mm-decode-content-transfer-encoding cte "text/plain")))))
 +
    (let ((handles ())
          (folder mh-show-folder-buffer)
          (raw-message-data (buffer-string)))
-@@ -577,7 +606,7 @@
+@@ -577,7 +604,7 @@
        (save-restriction
          (narrow-to-region (min (1+ (mh-mail-header-end)) (point-max))
                            (point-max))
@@ -145,7 +143,7 @@
                          (and cte (intern (downcase cte)))
                          (car ct))))))
  
-@@ -1054,7 +1083,8 @@
+@@ -1054,7 +1081,8 @@
       (when (and function (eolp))
         (backward-char))
       (unwind-protect (and function (funcall function data))
