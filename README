@@ -14,29 +14,56 @@
 	make install
 
 ◎ MH-E の パッチ(おまけ)
-○ PGP署名付きメッセージ対応パッチ
-	ext-mh-patch-28.x
-	  PGP署名付きメッセージ(本文に -----BGN PGP .... が含まれるもの)の
-	  表示時にデコードされない問題に対処するパッチ。
-	  lisp/gnus/mm-uu.el
-		mm-uu-pgp-signed-extract-1() と
-		mm-uu-pgp-encrypted-extract-1() において、
-		メッセージ内の該当部分の文字コードを設定する
-	  lisp/mh-e/mh-mime.el
-		検証ボタン等を押したあとに表示されるメッセージ内の
-		メイルアドレスやURLの強調表示等が消えることへの対処
-		(mh-press-button()に mh-show-addr() を追加)
+	○ext-patch-27.x
+	  送信メッセージの文字コードをContent-Typeのcharsetで
+	  指定するためのパッチ
 
-○ 送信メッセージの文字コードをContent-Typeのcharsetで指定するためのパッチ
-	ext-patch-27.x
-	ext-patch-28.x
 	  lisp/mh-e/mh-e.el
 	  	カスタマイズ変数 mh-letter-use-charset を追加
+
 	  lisp/mh-e/mh-comp.el
+	      mh-send-letter():
 	  	カスタマイズ変数 mh-letter-use-charset が non-nilの場合、
-		mh-send-letter()にて、Content-Typeのcharsetを取り出し
-		一時的に、mm-coding-system-priorities の前に加えて
-		優先文字コードとする。
+		Content-Typeのcharsetを取り出し、一時的に、
+		mm-coding-system-priorities の前に加えて優先文字コードとする。
+
+
+	○ext-mh-patch-28.x
+	  送信メッセージの文字コードをContent-Typeのcharsetで
+	  指定するためのパッチ。(ext-patch-27.x相当)
+	  さらに、PGP署名付きメッセージ(本文に -----BGN PGP ....
+	  が含まれるもの)がデコードされない問題に対処するパッチ。
+
+	  lisp/mh-e/mh-e.el
+	  	カスタマイズ変数 mh-letter-use-charset を追加
+
+	  lisp/mh-e/mh-comp.el
+	      mh-send-letter():
+	  	カスタマイズ変数 mh-letter-use-charset が non-nilの場合、
+		Content-Typeのcharsetを取り出し、一時的に、
+		mm-coding-system-priorities の前に加えて優先文字コードとする。
+
+	  lisp/gnus/mm-uu.el
+	    mm-uu-pgp-signed-extract-1():
+	    mm-uu-pgp-encrypted-extract-1():
+		メッセージ内の該当部分の文字コードを設定する
+
+	  lisp/mh-e/mh-mime.el
+	    mh-mime-display():
+		text/plainだけのメッセージが base64/quoted-printableで
+		エンコードされている場合にあらかじめデコードしておく。
+		("^-----BEGIN ...." 対策)
+	    mh-decode-message-body():
+		(Content-Typeの)charsetの指定が無い場合、
+		undecidedを指定して本文をデコードする。
+	    mh-press-button():
+		検証ボタン等を押したあとに表示されるメッセージ内の
+		メイルアドレスやURLの強調表示等が消えることへの対処。
+
+	  lisp/mh-e/mh-show.el
+	    mh-display-msg():
+		表示メッセージ内に残っている未デコード部分を
+		強引にデコードする。
 
 ==========================================================================
 === 変更履歴

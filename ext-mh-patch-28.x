@@ -98,6 +98,85 @@
  	(list (mm-make-handle buf '("application/pgp-encrypted")))))))
  
  (defun mm-uu-pgp-encrypted-extract ()
+--- lisp/mh-e/mh-comp.el-ORIG	2022-03-11 16:04:21.000000000 +0900
++++ lisp/mh-e/mh-comp.el	2022-04-22 12:29:17.187746000 +0900
+@@ -272,6 +272,11 @@
+ of the delivery; this output can be found in a buffer called \"*MH-E
+ Mail Delivery*\".
+ 
++When the customization option `mh-letter-use-charset' is non-nil,
++the charset parameter in the Content-Type header field specifies
++prefered charset for outgoing message,
++i.e, preprendig it to the option `mm-coding-system-priorities'.
++
+ The hook `mh-before-send-letter-hook' is run at the beginning of
+ this command. For example, if you want to check your spelling in
+ your message before sending, add the function `ispell-message'.
+@@ -295,10 +300,45 @@
+            (goto-char (point-min)))
+       (if (not (y-or-n-p "Auto fields inserted, send? "))
+           (error "Send aborted")))
+-  (cond ((mh-mh-directive-present-p)
+-         (mh-mh-to-mime))
+-        ((or (mh-mml-tag-present-p) (not (mh-ascii-buffer-p)))
+-         (mh-mml-to-mime)))
++
++  ;; fetch "Content-Type" field and get "charset=xxx".
++  ;; if exists, set mm-coding-system-priorities accordingly,
++  ;; and replace "Content-Type" field without "charset=xxx".
++  (let* ((mm-coding-system-priorities mm-coding-system-priorities)
++	 (case-fold-search t)
++	 (content-type
++	  (save-restriction
++	    (narrow-to-region (point-min) (mail-header-end))
++	    (mail-fetch-field "content-type")))
++	 new-content-type charset)
++    (when (and content-type
++	       (string-match "charset=" content-type))
++      (setq new-content-type
++	    (apply #'concat
++		   (mapcar
++		    #'(lambda (x)
++			(cond
++			 ((stringp x) x)	;; first element
++			 ((consp x)	;; parameter (symbol . value-string)
++			  (if (not (eq (car x) 'charset))
++			      (format "; %s=%s" (car x) (cdr x))
++			    (setq charset (intern (downcase (cdr x))))
++			    ""))
++			 (t "")))
++		    (mail-header-parse-content-type content-type))))
++      (save-restriction
++	(message-narrow-to-headers)
++	(goto-char (point-min)) 
++	(and (search-forward content-type nil t nil)
++	     (replace-match new-content-type)))
++      (when (and mh-letter-use-charset charset (coding-system-p charset))
++	(setq mm-coding-system-priorities
++	      (cons charset mm-coding-system-priorities))))
++    (cond ((mh-mh-directive-present-p)
++           (mh-mh-to-mime))
++          ((or (mh-mml-tag-present-p) (not (mh-ascii-buffer-p)))
++           (mh-mml-to-mime)))
++    )
+   (save-buffer)
+   (message "Sending...")
+   (let ((draft-buffer (current-buffer))
+--- lisp/mh-e/mh-e.el-ORIG	2022-03-11 16:04:21.000000000 +0900
++++ lisp/mh-e/mh-e.el	2022-04-09 21:59:47.132112000 +0900
+@@ -1966,6 +1966,12 @@
+   :group 'mh-letter
+   :package-version '(MH-E . "8.0"))
+ 
++(defcustom-mh mh-letter-use-charset t
++  "use the charset parameter in the user specified Content-Type header field,
++by preprending it to the option `mm-coding-system-priorities'."
++  :type 'boolean
++  :group 'mh-letter)
++
+ ;;; Ranges (:group 'mh-ranges)
+ 
+ (defcustom-mh mh-interpret-number-as-range-flag t
 --- lisp/mh-e/mh-mime.el-ORIG	2022-03-11 16:04:21.000000000 +0900
 +++ lisp/mh-e/mh-mime.el	2022-04-23 15:21:16.229919000 +0900
 @@ -514,6 +514,33 @@
@@ -153,3 +232,55 @@
  
  (defun mh-push-button (event)
    "Click MIME button for EVENT.
+--- lisp/mh-e/mh-show.el-ORIG	2022-03-11 16:04:21.000000000 +0900
++++ lisp/mh-e/mh-show.el	2022-04-22 21:06:29.584976000 +0900
+@@ -177,6 +177,41 @@
+ 
+ First argument is folder name. Second is message number.")
+ 
++(defun mh-display-msg--fix-decoding ()
++  "fix undecoded eight-bit sequences."
++  (save-restriction
++    (goto-char (point-min))
++    (while (and (skip-chars-forward "^\x1b\x80-\xff" (point-max))
++                (< (point) (point-max)))
++      (cond
++       ;; 8-bit byte
++       ((and (< (point) (point-max))
++             (eq (char-charset (char-after)) 'eight-bit)
++	     (null (text-properties-at (point))))
++	(let ((start (point))
++	      charset)
++	  (if (>= (skip-chars-forward "\x80-\xff" (point-max)) 2)
++	      (and
++	       (setq charset (detect-coding-region start (point) t))
++	       (decode-coding-region start (point) charset)))))
++       ;; iso-2022-jp sequence "\e$B .... \e(B"
++       ((and (< (+ (point) 3) (point-max))
++             (null (text-properties-at (point)))
++             (eq (char-after) ?\e)
++             (eq (char-after (+ (point) 1)) ?$)
++             (eq (char-after (+ (point) 2)) ?B))
++        (let ((start (point)))
++	  (if (search-forward "\e(B" (point-max) t)
++	      (decode-coding-region start (point) 'iso-2022-jp)
++            (forward-char))))
++       ;; skip 8-bit byte if any
++       ((and (< (point) (point-max))
++             (eq (char-charset (char-after)) 'eight-bit))
++        (skip-chars-forward "\x80-\xff" (point-max)))
++       ;; advance at least one
++       ((< (point) (point-max))
++        (forward-char))))))
++
+ ;;;###mh-autoload
+ (defun mh-display-msg (msg-num folder-name)
+   "Display MSG-NUM of FOLDER-NAME.
+@@ -231,6 +266,7 @@
+                (mh-add-missing-mime-version-header)
+                (setf (mh-buffer-data) (mh-make-buffer-data))
+                (mh-mime-display))
++             (mh-display-msg--fix-decoding)
+              (mh-show-unquote-From)
+              (mh-show-xface)
+              (mh-show-addr)
