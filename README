@@ -13,7 +13,7 @@
 
 ◎ nmh の日本語パッチ
 
-	README-1.8	このファイル
+	README		このファイル
 	nmh-1.8-patch	日本語パッチ
 	my-code		formatproc用サンプルコード
 	sample/*	formatファイル、.mh_profileのサンプル
