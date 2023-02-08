@@ -1,4 +1,0 @@
-from:nocomponent,formatfield="%(unquote(decode(friendly{text}))) writes:"
-body:component="> ",overflowtext="> ",overflowoffset=0,\
-format,\
-formatarg=":=HDRT=:%{content-type}:=HDRE=:%{content-transfer-encoding}"

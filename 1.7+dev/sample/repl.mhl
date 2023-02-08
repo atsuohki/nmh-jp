@@ -1,2 +1,0 @@
-from:nocomponent,formatfield="%(decode(friendly{text})) writes:"
-body:component="> ",overflowtext="> ",overflowoffset=0

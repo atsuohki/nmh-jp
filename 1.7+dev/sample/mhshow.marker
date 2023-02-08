@@ -1,4 +1,0 @@
-[ part %{part} \
-%<{description}%(decode{description})\
-%?{cdispo-filename}%(decode{cdispo-filename})\
-%|%{ctype-name}%> ]

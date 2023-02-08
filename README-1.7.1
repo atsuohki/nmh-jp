@@ -1,18 +1,86 @@
 
-◎ nmh の master (git://git.savannah.nongnu.org/nmh.git) に対する
-   日本語パッチです。
+ オリジナルのnmhは、ローケルとして ja_JP.UTF-8 を使用する限り
+ (つまり、画面表示の文字コードがUTF-8であれば)、MIME形式の漢字を含む
+ 受信メイルを表示できます。(ただし、OS側のローケルの表示文字幅情報の
+ 不備による不具合が生じる可能性はある)
+ 一方、送信メイルの文字コードはUTF-8に限られます。
 
-	README		このファイル
-	1.7+dev-patch 日本語パッチ
+ 本パッチは、
+    ローケルが ja_JP.UTF-8 以外での画面表示、
+    UTF-8に加えて、ISO-2022-JP、EUC-JP、SHIFT_JIS(おまけ)でのメイル送信、
+    (MIME非対応の)旧JUNETメイルの表示
+ を可能にします。
+
+◎ nmh の日本語パッチ
+
+	README-1.7.1	このファイル
+	nmh-1.7.1-patch 日本語パッチ
 	my-code		formatproc用サンプルコード
 	sample/*	formatファイル、.mh_profileのサンプル
 
-○ 1.7+devソースツリーに1.7+dev-patchを適用してから
-	INSTALLの手順にしたがってビルド。
+	○ nmh-1.7.1ソースツリーにnmh-1.7.1-patchを適用してから
+	   INSTALLの手順にしたがってビルド。
 
-	configure --with-hash-backup --with-tls --with-cyrus-sasl
-	make
-	make install
+	    configure --with-hash-backup --with-tls --with-cyrus-sasl
+	    make
+	    make install
+
+	   なお、プロファイルに追加される項目は、
+	   「変更履歴」の先頭部分を参照。
+
+◎ MH-E の パッチ(おまけ)
+	○ext-patch-27.x
+	  送信メッセージの文字コードをContent-Typeのcharsetで
+	  指定するためのパッチ
+
+	  lisp/mh-e/mh-e.el
+	  	カスタマイズ変数 mh-letter-use-charset を追加
+
+	  lisp/mh-e/mh-comp.el
+	      mh-send-letter():
+	  	カスタマイズ変数 mh-letter-use-charset が non-nilの場合、
+		Content-Typeのcharsetを取り出し、一時的に、
+		mm-coding-system-priorities の前に加えて送信時の
+		優先文字コードとする。
+
+
+	○ext-mh-patch-28.x
+	  送信メッセージの文字コードをContent-Typeのcharsetで
+	  指定するためのパッチ(ext-patch-27.x相当)に加えて、
+	  PGP署名付きメッセージ(本文に -----BGN PGP ....
+	  が含まれるもの)がデコードされない問題に対処するパッチ。
+
+	  lisp/mh-e/mh-e.el
+	  	カスタマイズ変数 mh-letter-use-charset を追加
+
+	  lisp/mh-e/mh-comp.el
+	      mh-send-letter():
+	  	カスタマイズ変数 mh-letter-use-charset が non-nilの場合、
+		Content-Typeのcharsetを取り出し、一時的に、
+		mm-coding-system-priorities の前に加えて送信時の
+		優先文字コードとする。
+
+	  lisp/gnus/mm-uu.el
+	    mm-uu-pgp-signed-extract-1():
+	    mm-uu-pgp-encrypted-extract-1():
+		メッセージ内の該当部分の文字コードを設定する
+
+	  lisp/mh-e/mh-mime.el
+	    mh-mime-display():
+		text/plainだけのメッセージが base64/quoted-printableで
+		エンコードされている場合にあらかじめデコードしておく。
+		("^-----BEGIN ...." 対策)
+	    mh-decode-message-body():
+		(Content-Typeの)charsetの指定が無い場合、
+		undecidedを指定して本文をデコードする。
+	    mh-press-button():
+		検証ボタン等を押したあとに表示されるメッセージ内の
+		メイルアドレスやURLの強調表示等が消えることへの対処。
+
+	  lisp/mh-e/mh-show.el
+	    mh-display-msg():
+		表示メッセージ内に残っている未デコード部分を
+		強引にデコードする。
 
 ==========================================================================
 === 変更履歴
@@ -28,10 +96,6 @@ wcwidth_fix: enable		表示文字幅の簡易補正(8ビット文字は1コラム、
 				文字幅データに不備がある場合の処置
 guess_8bit_charset: enable	euc-jp/utf-8/shift_jis を判定する
 #------------------------------------------------------------------------
-
-2022/xx/xx
-
- 1.7+dev に対応中
 
 2022/04/01
 
@@ -91,12 +155,9 @@ guess_8bit_charset: enable	euc-jp/utf-8/shift_jis を判定する
 
 【TODO】
 【test】
- ・テストスーツを実行する場合、
-	(export LANG=en_US.UTF-8; export TZ="05:00"; make check-TEST)
-   とする。
- ・gecosフィールドに日本語が含まれるとき、
-   そのコードセットとLANGの設定が異なる場合には、
-   test/format/test-mynameの"GECOS field test"に失敗する。
+ gecosフィールドに日本語が含まれるとき、
+ そのコードセットとLANGの設定が異なる場合には、
+ test/format/test-mynameの"GECOS field test"に失敗する。
 
 #------------------------------------------------------------------------
  components ファイル
@@ -125,6 +186,10 @@ scanコマンドのサマリー表示/showコマンドの改善
 
 h/mh.h
 	iso-2022-jp 関連のマクロ追加。
+
+h/prototypes.h
+	decode_b64q() 追加
+	find_euc_utf_sjis() 変更
 
 uip/scansbr.c
     scan():
@@ -157,7 +222,6 @@ sbr/fmt_rfc2047.c
 	ヘッダーフィールドに含まれるiso-2022-jpコードシーケンスを
 	表示できるようにコード変換を行う処理を追加(旧JUNETメイル対応)。
 	base64のデコード処理をdecode_b64q()を使うように変更。
-	戻り値が変更された[2022/03/02] (デコードの有無→文字列長)
 
 sbr/fmt_scan.c
     cptrimmed():
@@ -167,7 +231,7 @@ sbr/fmt_scan.c
 	(wcwidth()を(つまり*/LC_CTYPEファイルを)修正するのが筋だが…
 	 8ビット文字は1コラム、それ以外は2コラムと処理する。
 #if 0
-	 ただし、eucJPとUTF-8の場合、半角カタカナは1コラムとする。)
+	 ただし、eucJPの場合、半角カタカナは1コラムとする。)
 #endif
 
 sbr/utils.c
