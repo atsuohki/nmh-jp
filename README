@@ -18,7 +18,7 @@
 	my-code		formatproc用サンプルコード
 	sample/*	formatファイル、.mh_profileのサンプル
 
-	○ nmh-1.7.1ソースツリーにnmh-1.7.1-patchを適用してから
+	○ nmh-1.8ソースツリーにnmh-1.8-patchを適用してから
 	   INSTALLの手順にしたがってビルド。
 
 	    configure --with-hash-backup --with-tls --with-cyrus-sasl
